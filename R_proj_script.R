@@ -10,3 +10,5 @@ x == 1
 
 #jebać psu 
 y == 2
+
+#komentarz Macieja
