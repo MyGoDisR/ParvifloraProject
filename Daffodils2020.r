@@ -197,3 +197,4 @@ merge_summaries <- function(xlsx_path){
 df_summary <- merge_summaries(xlsx_path)
 
 df <- parse_table(xlsx_path, sheet_name)
+#komentarz próbny
