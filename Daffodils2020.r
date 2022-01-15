@@ -71,7 +71,7 @@ summary_for_period <- function(path, sheet_name){
   return(df)
 }
 
-parse_table <- function(path, sheet_name){
+parse_table <- function(xlsx_path, sheet_name){
   #This function takes Parviflora Financial Report (part with each shops' report) and bundles it together in one table
   #inputs:
   #path - path of a xlsx file
@@ -137,30 +137,36 @@ parse_table <- function(path, sheet_name){
   additional_col_names <- labels %>% slice(c(location))
   ids <- additional_col_names %>% filter(col==2 & !character=='Transaction Amount') %>% arrange(row)
   
+  #extracting codes
+  codes <- additional_col_names %>% filter(col==3 & !character=='Trans Count') %>% arrange(row)
+  
   #putting ids in rows where labels == 'Totals' beceause this is the value that is exatcly the same in each table and is there always
   value_to_search_for <- 'Totals'
   intervals <- stack(setNames(lapply(df, grep, pattern = value_to_search_for), 'character'))[[1]]
   
   df$id <- NA
+  df$code <- NA
   
   for (i in 1:length(intervals)) {
     df[intervals[i],'id'] <- ids$character[i]
+    df[intervals[i], 'code'] <- codes$character[i]
   }
   
   #filling empty rows in id columns with ids 
   df <- df %>% fill(id, .direction='up') %>% filter(!character=='--')
+  df <- df %>% fill(code, .direction='up')
   
   #There is a situation where labels duplicate, in those instances value for one label is neagative, because all labels in each table need to be unique,
   #in the code below sufixes are added to labels with negative values
-  df_trimmed <- df %>% select(character, trans_amount, trans_count, id) %>%
+  df_trimmed <- df %>% select(character, trans_amount, trans_count, id, code) %>%
     mutate(trans_amount = replace(trans_amount, is.na(trans_amount), 0)) %>%
     mutate(character_suffix = case_when(trans_amount<0 ~ ' (neg)', TRUE ~ '')) %>%
     mutate(label = paste(character, character_suffix))
   
   #To make the final table there needs to be only one value column, therefore trans_amount and trans_count are going to be merged
   # and additional label column is going to be created
-  df_trans_amount <- df_trimmed %>% select(label, trans_amount, id)
-  df_trans_count <- df_trimmed %>% select(label, trans_count, id)
+  df_trans_amount <- df_trimmed %>% select(label, trans_amount, id, code)
+  df_trans_count <- df_trimmed %>% select(label, trans_count, id, code)
   
   df_trans_amount$position <- 'trans_amount'
   df_trans_count$position <- 'trans_count'
@@ -175,7 +181,8 @@ parse_table <- function(path, sheet_name){
   a <- a %>% select(-names(a)[15])
   
   return(a)
-}   
+}
+
 
 merge_summaries <- function(xlsx_path){
   #this function creates one summary-for_period combining each sheet of the xlsx file
