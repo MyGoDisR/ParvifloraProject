@@ -8,5 +8,14 @@ stores <- readxl::read_excel("Stores.xlsx")
 #jebac psy
 x == 1
 
+<<<<<<< HEAD
 #jebac pis
 #stonoga mial racje
+=======
+#jebać psu 
+y == 2
+
+#komentarz Macieja
+>>>>>>> f416cf5394b2c2b9bdda7e7302084a283be6ea16
+
+#R jebie dupsko
