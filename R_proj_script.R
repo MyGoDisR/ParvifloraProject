@@ -7,3 +7,6 @@ stores <- readxl::read_excel("Stores.xlsx")
 
 #jebac psy
 x == 1
+
+#jebac pis
+#stonoga mial racje
