@@ -1,15 +1,48 @@
 library(readxl)
 library(tidyverse)
 library(tidyxl)
+library(rio)
 
 xlsx_path <- '/Users/Maciek/Desktop/Master_Studies/Itroduction_to_programming_with_R/R_Final_Project/R_proj/Daffodils2020.xlsx'
-sheet_name <- 'Feb20'
 
-###TODO: add store id and month
-### convert xls to xlsx
-### looping through all sheets
+get_file_paths <- function(pattern = "Daffodils*.xls"){
+  '
+    This function dynamically creates paths to files matching given pattern.
+    Intended to use to find all Dafodils sales .xls files in the working directory
+    input:
+      pattern (str) - pattern to find (default = "Daffodils*.xls")
+    returns:
+      vector of absolute file paths
+  '
+  # Create a list of all paths to Daffodils files
+  daffodils_file_paths <- c()
+  for(f in Sys.glob(pattern)){
+    daffodils_file_paths <- c(daffodils_file_paths,
+                              paste(normalizePath(dirname(f)), fsep = .Platform$file.sep, f, sep = "")) 
+  }
+  return(daffodils_file_paths)
+}
 
-cells <- xlsx_cells(xlsx_path)
+convert_to_xlsx <- function(xls_path) {
+  '
+  Function converts the Daffodil file into .xlsx format so it could be processed by tidyxl package
+  input:
+    xls_path (str) - path to the xls file we want to convert
+  returns:
+    conv_file (str) - name of the converted .xlsx file
+  
+  TODO: yr could also possibly be returned and then used to name the data.frame if there are multiple years
+  '
+  # import all sheets from the file as tibbles stored in a list
+  temp_xls <- rio::import_list(xls_path, setclass = "tbl")
+  yr <- stringr::str_match(xls_path, "Daffodils\\s*(.*?)\\s*.xls")[,2]
+  # export it as .xlsx file (the sheets go into their place)
+  conv_file = paste("Daffodils",  yr, ".xlsx", sep='')
+  rio::export(temp_xls, conv_file)
+  return(conv_file)
+}
+
+
 get_sheet_names <- function(path){
   #This function returns names of all the sheets in the excel files
   #inputs:
@@ -201,7 +234,22 @@ merge_summaries <- function(xlsx_path){
   return(df_2)
 }
 
-df_summary <- merge_summaries(xlsx_path)
+# Define Constants (just for now) - the future loop
+sheet_name <- 'Feb20'
 
-df <- parse_table(xlsx_path, sheet_name)
-#komentarz próbny
+###TODO: add store id and month
+### Minor improvement: Change functions a bit because we create the object from xlsx_cells() few times and it could be reused 
+### DONE convert xls to xlsx 
+### looping through all sheets
+
+paths <- get_file_paths()
+# TODO For now we only have one year - thus one file [1] but what in the future?
+# Create a loop to iterate through these files
+conv_file <- convert_to_xlsx(paths[1])
+
+# commented as it is used inside summary_for_period function
+#cells <- xlsx_cells(conv_file)
+
+df_summary <- merge_summaries(xlsx_path) #change to conv_file or even that cells object
+
+df <- parse_table(xlsx_path, sheet_name) #change to conv_file 
