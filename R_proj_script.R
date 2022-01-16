@@ -19,3 +19,16 @@ y == 2
 >>>>>>> f416cf5394b2c2b9bdda7e7302084a283be6ea16
 
 #R jebie dupsko
+
+Sys.setlocale("LC_CTYPE", "Polish")
+library(haven)
+library(tidyverse)
+
+#Still can't figure out how to change letters t o polish ones and replace the "?" signs. 
+
+as.character(stores$"Store Name") 
+as.integer(stores$"Store ID")
+
+names(stores) <- c("Store ID", "STORE.NAME")
+
+sales_jan_2020_test= sales_jan_2020 %>% left_join(stores,by="STORE.NAME")
