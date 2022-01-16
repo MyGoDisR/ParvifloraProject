@@ -4,6 +4,7 @@ library(tidyxl)
 library(rio)
 
 xlsx_path <- '/Users/Maciek/Desktop/Master_Studies/Itroduction_to_programming_with_R/R_Final_Project/R_proj/Daffodils2020.xlsx'
+xls_path <- ''
 
 get_file_paths <- function(pattern = "Daffodils*.xls"){
   '
@@ -33,6 +34,9 @@ convert_to_xlsx <- function(xls_path) {
   
   TODO: yr could also possibly be returned and then used to name the data.frame if there are multiple years
   '
+  
+  #UNNEEDED WITH parse_xls_table which handles xls files
+  
   # import all sheets from the file as tibbles stored in a list
   temp_xls <- rio::import_list(xls_path, setclass = "tbl")
   yr <- stringr::str_match(xls_path, "Daffodils\\s*(.*?)\\s*.xls")[,2]
@@ -104,7 +108,94 @@ summary_for_period <- function(path, sheet_name){
   return(df)
 }
 
-parse_table <- function(xlsx_path, sheet_name){
+parse_xls_table <- function(path, sheet){
+  #TODO: remove '--' in values 
+  #This function takes Parviflora Financial Report (part with each shops' report) and bundles it together in one table
+  #inputs:
+  #path - path of a excel file
+  #sheet - name or index of a excel sheet
+  
+  #Reading in the data
+  df <- read_excel(file_path, sheet = sheet_name) # Equivalent
+  df <- df %>% rename(labels=1, val1=2, val2=3, val3=4, val4=5)
+  
+  #setting the value of a first label cell in each individual report to later search for coordinates
+  first_cell <- 'Submitting Location:'
+  
+  #creating a vector with locations of each row containing first_cell value
+  beginning_row <- stack(setNames(lapply(df, grep, pattern = first_cell), 'labels'))[[1]]
+  
+  #removing rows with summary table
+  df <- df %>% slice(beginning_row[1]:nrow(df)) %>% select(-c(4,5))
+  
+  #creating helper table with all rows labels and row and col indexes
+  labels <- df %>% filter(!is.na(labels))
+  
+  
+  #creating a vector with locations of each row containing first_cell value
+  #there is one uneeded row in each shop's table, which is
+  #submitting location
+  #code below removes it
+  
+  #creating a vector with locations of each row containing first_cell value
+  loc <- stack(setNames(lapply(labels, grep, pattern = first_cell), 'labels'))[[1]]
+  
+  #removing unneeded rows based on the locations calculated above 
+  labels_2 <- labels %>% slice(-c(loc))
+  
+  df <- labels_2 %>% rename(trans_amount=2, trans_count=3)
+  
+  #extracting ids and codes
+  additional_col_names <- labels %>% slice(c(loc)) %>% rename(id=2, code=3) %>% select(-1)
+  
+  #putting ids in rows where labels == 'Totals' beceause this is the value that is exatcly the same in each table and is there always
+  value_to_search_for <- 'Totals'
+  intervals <- stack(setNames(lapply(df, grep, pattern = value_to_search_for), 'labels'))[[1]]
+  
+  #creating empty id and code column to later fill them in with corresponding data
+  df$id <- NA
+  df$code <- NA
+  
+  #looping through all rows with 'Total' in labels column and putting a corresponding id and code in respective columns
+  for (i in 1:length(intervals)) {
+    df[intervals[i],'id'] <- additional_col_names$id[i]
+    df[intervals[i], 'code'] <- additional_col_names$code[i]
+  }
+  
+  #filling empty rows in id columns with ids 
+  df <- df %>% fill(id, .direction='up') #%>% filter(!character=='--')
+  df <- df %>% fill(code, .direction='up')
+  
+  #There is a situation where labels duplicate, in those instances value for one label is neagative, because all labels in each table need to be unique,
+  #in the code below sufixes are added to labels with negative values
+  df_trimmed <- df %>%
+    mutate(trans_amount = replace(trans_amount, is.na(trans_amount), 0)) %>%
+    mutate(label_suffix = case_when(trans_amount<0 ~ ' (neg)', TRUE ~ '')) %>%
+    mutate(labels = paste(labels, label_suffix)) %>% select(-label_suffix)
+  
+  #To make the final table there needs to be only one value column, therefore trans_amount and trans_count are going to be merged
+  # and additional label column is going to be created
+  df_trans_amount <- df_trimmed %>% select(labels, trans_amount, id, code)
+  df_trans_count <- df_trimmed %>% select(labels, trans_count, id, code)
+  
+  df_trans_amount <- df_trans_amount %>% rename(value=trans_amount)
+  df_trans_count <- df_trans_count %>% rename(value=trans_count)
+  
+  df_trans_amount$position <- 'trans_amount'
+  df_trans_count$position <- 'trans_count'
+  
+  #creating a stacked tables
+  df_final <- rbind(df_trans_amount, df_trans_count)
+  
+  #pivoting the final table
+  df_final_pivot <- spread(df_final, labels, value)
+  df_final_pivot <- df_final_pivot %>% select(-names(a)[16])
+  
+  return(a)
+}
+
+parse_xlsx_table <- function(xlsx_path, sheet_name){
+  #FUNCTION IS OLD AND SHOULD BE DELETED LATER ON
   #This function takes Parviflora Financial Report (part with each shops' report) and bundles it together in one table
   #inputs:
   #path - path of a xlsx file
@@ -251,5 +342,7 @@ conv_file <- convert_to_xlsx(paths[1])
 #cells <- xlsx_cells(conv_file)
 
 df_summary <- merge_summaries(xlsx_path) #change to conv_file or even that cells object
+#TODO: change summary_for_period function so it can take in xls files
 
-df <- parse_table(xlsx_path, sheet_name) #change to conv_file 
+df <- parse_xls_table(xlsx_path, sheet_name) #change to conv_file 
+#TODO: remove '--' in values - replace with 0s or NAs
