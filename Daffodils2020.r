@@ -149,7 +149,11 @@ parse_xls_table <- function(path, sheet, pivot=TRUE){
   df_final <- rbind(df_trans_amount, df_trans_count)
   
   #adding month column
+  # For the purpose of doing analysis and joining data.frames 
+  # it would be perhaps better to have separate columns for month and year
+  month_number <- match(substr(sheet_name,1,3),month.abb)
   
+  # For now month column is in format "Feb20"
   df_final$month <- sheet
   
   #if pivot argument is true, the function pivots df_final and returns the pivoted frame, else it return just df_final - this can be used if later on all months are to be combined in one table
