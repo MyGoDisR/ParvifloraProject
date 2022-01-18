@@ -17,12 +17,15 @@ library("xlsx")
 getwd()
 #^to check your repository
 
+files = list.files(path = getwd())
 
 
 ###STORES####
 
 stores <- readxl::read_excel("Stores.xlsx")
-names(stores) <- c("Store ID", "STORE.NAME")
+store_name <- stores$`Store Name`
+store_id <- stores$`Store ID`
+
 #ignore.case = TRUE
 
 #patterns <- c("*110", "*170", "*390", "*400", "*410", "*420", "*430", "*440", "*510",
@@ -37,6 +40,19 @@ temp = list.files(pattern="*.csv")
 list2env(
   lapply(setNames(temp, make.names(gsub("*.csv$", "", temp))), 
          read.csv), envir = .GlobalEnv)
+
+
+Summary_of_Sales <- str_detect(files, "csv") %>%
+  
+  
+  
+  
+str_detect(files$"STORE..", "548")
+
+
+
+\Uhhhhhhhhhh
+
 
 # ^ This will automaticly load any csv file 
 
