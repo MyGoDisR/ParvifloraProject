@@ -28,9 +28,9 @@ store_id <- stores$`Store ID`
 
 #ignore.case = TRUE
 
-#patterns <- c("*110", "*170", "*390", "*400", "*410", "*420", "*430", "*440", "*510",
-#              "*150", "*210", "*240", "*350", "*200", "*260", "*330", "*540", "*550", 
-#              "*570", "*580", "*590", "*270", "*320", "*340", "*500", "*360", "*530")
+patterns <- c("*110", "*170", "*390", "*400", "*410", "*420", "*430", "*440", "*510",
+              "*150", "*210", "*240", "*350", "*200", "*260", "*330", "*540", "*550", 
+              "*570", "*580", "*590", "*270", "*320", "*340", "*500", "*360", "*530")
 #result <- filter(stores, grepl(paste(patterns, collapse="|"), Letter))
 #w trakcie robotaju
 
@@ -45,9 +45,13 @@ list2env(
 Summary_of_Sales <- str_detect(files, "csv") %>%
   
   
+Summary.of.Sales.January.2020 %>%
+  as.character("STORE..") %>%
+  select("STORE..") %>%
+  ends_with ("170")
+
   
-  
-str_detect(files$"STORE..", "548")
+str_detect(Summary.of.Sales.January.2020$"STORE..", "548")
 
 
 
