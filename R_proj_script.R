@@ -106,7 +106,16 @@ stores <- readxl::read_excel("Stores.xlsx")
 df_stores_sales <- stores %>% left_join(select(df_sales, -"store_name"), 
                                         by = c("Store ID" = "store_id"))
 
+# Stores that didn't provide us with data in Total Sales Summary
 
+which(is.na(df_stores_sales$store_number))
+
+number <- df_stores_sales$store_number
+
+#for(i in 1:length(df_stores_sales$store_number)) {
+#  if(is.na(data$x_num[i])) {
+#    print("Damn, it's NA")
+#  }
 
 ### DAFFODILS ####
 
