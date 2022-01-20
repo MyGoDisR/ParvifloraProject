@@ -2,10 +2,9 @@
 
 # define constant inputs
 # expected columns order and names to be assigned
-columns <- c("store_name", "store_number", "count_Azalea", "rev_Azalea", 
+sales_cols <- c("store_name", "store_number", "count_Azalea", "rev_Azalea", 
              "count_Begonia", "rev_Begonia", "count_Carnation", "rev_Carnation",
              "count_Daffodil", "rev_Daffodil", "count_total", "rev_total")
-# TODO data types
 
 
 add_month_year <- function(file_name, df){
@@ -65,7 +64,7 @@ union_sales_data <- function(file_paths){
   for (file in file_paths)
     {
     # read data.frame with monthly data
-    df_mth <- read_delim(file, delim = ",", col_names = columns)
+    df_mth <- read_delim(file, delim = ",", col_names = sales_cols)
     print(paste("wczytano plik", file))
     
     # Add information about month year and extracted store ID (this is necessary for later join)
@@ -81,18 +80,16 @@ union_sales_data <- function(file_paths){
   # make a UNION - bind list of data.frames together
   df_sales <- dplyr::bind_rows(sales_dflist)
   df_rest <- dplyr::bind_rows(discarded_dflist)
+  
+  # columns with count and revenue are read as character - change them to numeric using the fact that names are meaningful 
+  # colnames as list -> selection str_start for "count" and "rev", so only columns for stores counts and revenues are selected 
+  clmns <- colnames(df_sales)
+  clmns_to_cast <- clmns[str_starts(clmns, "count") | str_starts(clmns, "rev")]
+  # previously selected counts and revenues converted to numeric
+  df_sales <- df_sales %>% mutate_at(clmns_to_cast, ~as.numeric(.))
+
   ls_df <- list("df_totals" = df_sales, "df_rest" = df_rest)
   
-  # df_sales char -> num
-  sapply(df_sales, class)
-    # colnames as list -> selection str_start for "count" and "rev", so only character columns for stores counts and revenues are selected 
-    clmns <- colnames(df_sales)
-    clmns_list <- clmns[str_starts(cc, "count") | str_starts(cc, "rev")]
-    # previously selected counts and revenues converted to numeric
-    df_sales <- df_sales %>% mutate_at(clmns_list, ~as.numeric(.))
-    #confirmation
-    sapply(df_sales, class)
-    
   # For now returning only the totals object - may change behaviour in the future if other data will be required
   return(ls_df$df_totals)
 }

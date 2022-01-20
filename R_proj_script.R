@@ -18,30 +18,11 @@ library(readxl)
 ### SUMMARY OF SALES ####
 
 source(list.files(pattern = "*process_sales_summaries*", recursive = TRUE))
-# TODO do sprawdzenia i zdefiniowania typy danych:
-# Pozdro - wczytujemy sobie dane ale one mają zły typ 
-# class(df_sales$count_total) to samo rev_total
+# TODO 
 
 # create a list of all Summary of Sales ... .csv files
 files_list <- list.files(pattern="^Summary.*csv$", recursive = TRUE)
 df_sales <- union_sales_data(files_list)
-
-
-# Join with stores
-### Read in STORES ####
-# LUDZIE NA WINDOWSIE - sprobujcie wczytac plik po zakomentowanej linii - pewnie nie zadziała
-#stores <- readxl::read_excel("data/Stores.xlsx")
-
-# list.files zwraca sciezke która będzie ok na większosci OS
-stores_file <- list.files(pattern="^Stores.*xlsx$", recursive = TRUE)
-stores <- readxl::read_excel(stores_file)
-
-# Left join to Stores - all stores will be present at this stage! 
-# Even those with all NULLs are present - meaning no sales of other flowers in these stores
-# (i.e. later join Daffodil data so we NEED them)
-df_stores_sales <- stores %>% left_join(select(df_sales, -"store_name"), 
-                                        by = c("Store ID" = "store_id"))
-
 
 
 ### DAFFODILS ####
@@ -49,26 +30,48 @@ df_stores_sales <- stores %>% left_join(select(df_sales, -"store_name"),
 source(list.files(pattern = "*process_Daffodils*.r$", recursive = TRUE))
 
 # TODO - do it in utilities/2_..Daffodils.r file
-#   - Change dtype of "code" to numeric (as in Summary data.frames)
-#   - Change column month to numeric type (ready variable - just assign to column)
-#   - add column "year" 
-#   - add column - "sheet" for easier identification only - it's current month column in "Feb20" format
 
 
-# one solution - use recursive = TRUE to get matching files in subdirectories
+# use recursive = TRUE to get matching files in subdirectories
 paths <- list.files(pattern = "^Daffodils.*xls$", recursive = TRUE)
 
-# TODO For now we only have one year - thus one file [1] but what in the future?
-# Create a loop to iterate through these files - NOT NECESSARY in this project
+# For now we only have one year - thus one file [1] but what in the future?
+# NOT NECESSARY in this project - Create a loop to iterate through these files - [1] indicates this possibility as paths would be a vector if there are many files
 
-df_summary <- merge_summaries(paths[1]) 
+df_summary_daffodils <- merge_summaries(paths[1]) 
 
-df_final <- combine_tables(paths[1], totals_only = TRUE)
+df_daffodils <- combine_tables(paths[1], totals_only = TRUE)
+
+
+# Join with stores
+### Read in STORES ####
+source(list.files(pattern = "*process_Stores*.R$", recursive = TRUE))
+# Find Stores data
+stores_file <- list.files(pattern="^Stores.*xlsx$", recursive = TRUE)
+# read the Stores data.frame - it is now a permutation of all stores with all possible months
+stores <- read_stores(stores_file, df_sales, df_daffodils)
+
+# Left join to Stores - all stores will be present at this stage! 
+# Even those with all NULLs are present - meaning no sales of other flowers in these stores
+# (i.e. later join Daffodil data so we NEED them)
+df_stores_sales <- stores %>% left_join(select(df_sales, -"store_name"), 
+                                        by = c("store_id" = "store_id",
+                                               "month" = "month_id", "year" = "year_id"))
 
 ### JOIN Daffodils to Sales Summaries ###
-# TODO First fix data types
-# Later join on Store ID, month_id and year
-#class(df_stores_sales$`Store ID`)
+# on store_id, month and year
+df_complete <- df_stores_sales %>% full_join(select(df_daffodils, -id), 
+                                   by = c("store_id" = "store_id", 
+                                          "month" = "month", "year" = "year")) %>%
+                                   arrange('store_id', "month")
+
+# Add totals from Daffodils file to their place and drop these columns
+df_complete <- df_complete %>% mutate(rev_Daffodil = trans_amount,
+                                      count_Daffodil = trans_count) %>%
+                               select(-trans_amount, -trans_count) %>%
+# However now the rev_total is not a really a total... should be updated
+                               mutate_if(is.numeric, ~replace(., is.na(.), 0)) %>% # first replace NAs (NA + 1 = NA)
+                               mutate(rev_total = rev_total + rev_Daffodil)
 
 
 ### ANALYSIS ###
