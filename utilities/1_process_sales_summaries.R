@@ -83,6 +83,16 @@ union_sales_data <- function(file_paths){
   df_rest <- dplyr::bind_rows(discarded_dflist)
   ls_df <- list("df_totals" = df_sales, "df_rest" = df_rest)
   
+  # df_sales char -> num
+  sapply(df_sales, class)
+    # colnames as list -> selection str_start for "count" and "rev", so only character columns for stores counts and revenues are selected 
+    clmns <- colnames(df_sales)
+    clmns_list <- clmns[str_starts(cc, "count") | str_starts(cc, "rev")]
+    # previously selected counts and revenues converted to numeric
+    df_sales <- df_sales %>% mutate_at(clmns_list, ~as.numeric(.))
+    #confirmation
+    sapply(df_sales, class)
+    
   # For now returning only the totals object - may change behaviour in the future if other data will be required
   return(ls_df$df_totals)
 }
