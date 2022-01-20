@@ -155,9 +155,10 @@ parse_xls_table <- function(path, sheet, totals_only=TRUE) {
   df<- df %>% tidyr::pivot_longer(trans_amount:trans_count, names_to = 'position', values_to = 'value')
   
   #Adding month and year column extracted from the sheet name
-  #WARNING: this approach will only work for the next 78 years, after that year column will yield unreliable results. In fact, does it yield reliable results now? What if the year is in fact 1920?!
-  df$month <- match(stringr::str_sub(sheet,1,3),month.abb)
-  df$year <- stringr::str_sub(sheet, -2, -1)
+  #Extracting year from the file name
+  df$month <- sheet %>% stringr::str_sub(1,3) %>% match(month.abb)
+  df$year <- stringr::str_match(path, "Daffodils\\s*(.*?)\\s*.xls$")[,2] %>% as.numeric()
+  
   
   if (totals_only==TRUE) {
     
@@ -248,7 +249,7 @@ combine_tables <- function(path, totals_only=TRUE){
   Output:
     <- df - data.frame object with totals for Daffodils for each month in a "tidy" format
   '
-  
+
   #Extracting sheet names
   sheets <- readxl::excel_sheets(path)
   
@@ -261,10 +262,28 @@ combine_tables <- function(path, totals_only=TRUE){
     df <- rbind(df, df_1)
   }
   
-  #pivoting the table and replacing NAs in numeric columns (if there are any) with 0s
-  df_pivoted <- df %>%
-    tidyr::spread(labels, value) %>%
-    dplyr::mutate_if(is.numeric, ~replace(., is.na(.), 0))
+  # Discuss: This function may return different results for totals and all fields now... 
+  #     it is all hypothetical as for this project we don't need to return anythin other than totals
+  
+  #pivoting the table and replacing NAs in value columns (if there are any) with 0s
+  if(totals_only == TRUE){
+    # adding this pivot here for easier joins on TOTALS  
+    df_pivoted <- df %>% select(-labels) %>% 
+      tidyr::pivot_wider(names_from = position, values_from = value)  %>%
+      dplyr::mutate_at(vars('trans_amount', 'trans_count'), ~replace(., is.na(.), 0))
+  
+    } else {
+    # if we want all values not only totals then we return the object in the long form 
+    # BUT: to be honest I would leave the labels as the column and return pivoted version anyway
+      # example: if we want to return sum of "Small Business" revenue - having this info in one column "labels"
+      # would allow us to simply group by this column without filtering "position column" first
+      # in the end it depends what are we going to do with this data...
+    
+    df_pivoted <- df %>%
+      tidyr::spread(labels, value) %>%
+      dplyr::mutate_if(is.numeric, ~replace(., is.na(.), 0))
+  }
+  
   
   return(df_pivoted)
 }

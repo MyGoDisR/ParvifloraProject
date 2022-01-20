@@ -42,18 +42,6 @@ stores <- readxl::read_excel(stores_file)
 df_stores_sales <- stores %>% left_join(select(df_sales, -"store_name"), 
                                         by = c("Store ID" = "store_id"))
 
-###### Tu chyba koniec - komentarze do Kuby ponizej
-# Kuba jesli identyfikatorem jest Store ID z pliku "Stores" to wszystko gra 
-# i nie potrzebujemy tego długiego numeru z pliku Summary - info Daffodils dodamy na podstawie 3 cyfrowego Store ID
-
-# Stores that didn't provide us with data in Total Sales Summary
-which(is.na(df_stores_sales$store_number))
-number <- df_stores_sales$store_number
-
-#for(i in 1:length(df_stores_sales$store_number)) {
-#  if(is.na(data$x_num[i])) {
-#    print("Damn, it's NA")
-#  }
 
 
 ### DAFFODILS ####
@@ -75,12 +63,26 @@ paths <- list.files(pattern = "^Daffodils.*xls$", recursive = TRUE)
 
 df_summary <- merge_summaries(paths[1]) 
 
-df_final <- combine_tables(paths[1])
+df_final <- combine_tables(paths[1], totals_only = TRUE)
 
 ### JOIN Daffodils to Sales Summaries ###
 # TODO First fix data types
 # Later join on Store ID, month_id and year
+#class(df_stores_sales$`Store ID`)
+
 
 ### ANALYSIS ###
 # Separate .r script in /utilities folder to make plots etc.
 # output plots / files whatever to /output directory
+# Stores that didn't provide us with data in Total Sales Summary
+
+# Kuba - przeniosłem tą część tutaj bo bardziej pasuje to do analizy
+which(is.na(df_stores_sales$store_number))
+number <- df_stores_sales$store_number
+
+#for(i in 1:length(df_stores_sales$store_number)) {
+#  if(is.na(data$x_num[i])) {
+#    print("Damn, it's NA")
+#  }
+
+
