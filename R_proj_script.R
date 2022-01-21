@@ -1,3 +1,4 @@
+'
 ---
   title: "Parviflora Project"
 subtitle: "Group project for Introduction to R classes"
@@ -8,6 +9,7 @@ output:
 editor_options: 
   chunk_output_type: console
 ---
+'
 # ^ wersja do tekstowego edytora z final assigmentem
   
 Sys.setlocale("LC_CTYPE", "Polish")
@@ -78,6 +80,9 @@ df_complete <- df_complete %>% mutate(rev_Daffodil = trans_amount,
 # Separate .r script in /utilities folder to make plots etc.
 # output plots / files whatever to /output directory
 # Stores that didn't provide us with data in Total Sales Summary
+
+# e.g. store_id 345 doesn't exist in Stores data we need to flag those
+# dla Swiebodzina brak danych wszędzie
 
 # Kuba - przeniosłem tą część tutaj bo bardziej pasuje to do analizy
 which(is.na(df_stores_sales$store_number))
