@@ -1,3 +1,4 @@
+'
 ---
   title: "Parviflora Project"
 subtitle: "Group project for Introduction to R classes"
@@ -8,64 +9,88 @@ output:
 editor_options: 
   chunk_output_type: console
 ---
+'
 # ^ wersja do tekstowego edytora z final assigmentem
   
 Sys.setlocale("LC_CTYPE", "Polish")
-library(haven)
 library(tidyverse)
-library("xlsx")
-getwd()
-#^to check your repository
-
-files = list.files(path = getwd())
+library(readxl)
 
 
-###STORES####
+### SUMMARY OF SALES ####
 
-stores <- readxl::read_excel("Stores.xlsx")
-store_name <- stores$`Store Name`
-store_id <- stores$`Store ID`
+source(list.files(pattern = "*process_sales_summaries*", recursive = TRUE))
+# TODO 
 
-#ignore.case = TRUE
-
-patterns <- c("*110", "*170", "*390", "*400", "*410", "*420", "*430", "*440", "*510",
-              "*150", "*210", "*240", "*350", "*200", "*260", "*330", "*540", "*550", 
-              "*570", "*580", "*590", "*270", "*320", "*340", "*500", "*360", "*530")
-#result <- filter(stores, grepl(paste(patterns, collapse="|"), Letter))
-#w trakcie robotaju
-
-###SUMMARY OF SALES####
-
-temp = list.files(pattern="*.csv")
-list2env(
-  lapply(setNames(temp, make.names(gsub("*.csv$", "", temp))), 
-         read.csv), envir = .GlobalEnv)
+# create a list of all Summary of Sales ... .csv files
+files_list <- list.files(pattern="^Summary.*csv$", recursive = TRUE)
+df_sales <- union_sales_data(files_list)
 
 
-Summary_of_Sales <- str_detect(files, "csv") %>%
-  
-  
-Summary.of.Sales.January.2020 %>%
-  as.character("STORE..") %>%
-  select("STORE..") %>%
-  ends_with ("170")
+### DAFFODILS ####
+# notice that only functions appear when sourcing this script - no variables are defined there
+source(list.files(pattern = "*process_Daffodils*.r$", recursive = TRUE))
 
-  
-str_detect(Summary.of.Sales.January.2020$"STORE..", "548")
+# TODO - do it in utilities/2_..Daffodils.r file
 
 
+# use recursive = TRUE to get matching files in subdirectories
+paths <- list.files(pattern = "^Daffodils.*xls$", recursive = TRUE)
 
-\Uhhhhhhhhhh
+# For now we only have one year - thus one file [1] but what in the future?
+# NOT NECESSARY in this project - Create a loop to iterate through these files - [1] indicates this possibility as paths would be a vector if there are many files
+
+df_summary_daffodils <- merge_summaries(paths[1]) 
+
+df_daffodils <- combine_tables(paths[1], totals_only = TRUE)
 
 
-# ^ This will automaticly load any csv file 
+# Join with stores
+### Read in STORES ####
+source(list.files(pattern = "*process_Stores*.R$", recursive = TRUE))
+# Find Stores data
+stores_file <- list.files(pattern="^Stores.*xlsx$", recursive = TRUE)
+# read the Stores data.frame - it is now a permutation of all stores with all possible months
+stores <- read_stores(stores_file, df_sales, df_daffodils)
 
-Sales <- list.files(path = getwd(), pattern = "*.csv")
+# Left join to Stores - all stores will be present at this stage! 
+# Even those with all NULLs are present - meaning no sales of other flowers in these stores
+# (i.e. later join Daffodil data so we NEED them)
+df_stores_sales <- stores %>% left_join(select(df_sales, -"store_name"), 
+                                        by = c("store_id" = "store_id",
+                                               "month" = "month_id", "year" = "year_id"))
 
-###DAFFODILES####
+### JOIN Daffodils to Sales Summaries ###
+# on store_id, month and year
+df_complete <- df_stores_sales %>% full_join(select(df_daffodils, -id), 
+                                   by = c("store_id" = "store_id", 
+                                          "month" = "month", "year" = "year")) %>%
+                                   arrange('store_id', "month")
 
-Daffodils <- list.files(pattern="xls$")
+# Add totals from Daffodils file to their place and drop these columns
+df_complete <- df_complete %>% mutate(rev_Daffodil = trans_amount,
+                                      count_Daffodil = trans_count) %>%
+                               select(-trans_amount, -trans_count) %>%
+# However now the rev_total is not a really a total... should be updated
+                               mutate_if(is.numeric, ~replace(., is.na(.), 0)) %>% # first replace NAs (NA + 1 = NA)
+                               mutate(rev_total = rev_total + rev_Daffodil)
 
-Daffodils2020 <- map_df(f, read_excel)
+
+### ANALYSIS ###
+# Separate .r script in /utilities folder to make plots etc.
+# output plots / files whatever to /output directory
+# Stores that didn't provide us with data in Total Sales Summary
+
+# e.g. store_id 345 doesn't exist in Stores data we need to flag those
+# dla Swiebodzina brak danych wszędzie
+
+# Kuba - przeniosłem tą część tutaj bo bardziej pasuje to do analizy
+which(is.na(df_stores_sales$store_number))
+number <- df_stores_sales$store_number
+
+#for(i in 1:length(df_stores_sales$store_number)) {
+#  if(is.na(data$x_num[i])) {
+#    print("Damn, it's NA")
+#  }
 
 
