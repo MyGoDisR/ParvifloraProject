@@ -15,6 +15,7 @@ editor_options:
 Sys.setlocale("LC_CTYPE", "Polish")
 library(tidyverse)
 library(readxl)
+library(ggplot2)
 
 
 ### SUMMARY OF SALES ####
@@ -71,21 +72,44 @@ df_complete <- df_stores_sales %>% full_join(select(df_daffodils, -id),
 df_complete <- df_complete %>% mutate(rev_Daffodil = trans_amount,
                                       count_Daffodil = trans_count) %>%
                                select(-trans_amount, -trans_count) %>%
-# However now the rev_total is not a really a total... should be updated
+  # flag stores with missing name as "unknown" 
+                               mutate(store_name = ifelse(is.na(store_name), "unknown", store_name)) %>%
+  # However now the rev_total is not a really a total... should be updated
                                mutate_if(is.numeric, ~replace(., is.na(.), 0)) %>% # first replace NAs (NA + 1 = NA)
                                mutate(rev_total = rev_total + rev_Daffodil)
+                
+
+# Save checkpoint file to /processed folder after data from both systems was integrated
+# this file may as well be used in .Rmd file
+tryCatch( # Just an experiment with tryCatch in R ... ugly syntax
+    expr = {
+      saveRDS(df_complete, file = "data/processed/integrated_data.rds")
+    }, # in case the above doesn't work - use recommended "here" library
+    error = function(e){
+      saveRDS(df_complete, here::here("data", "processed", "integrated_data.rds"))
+      message("File saved using here package, couldn't resolve path with '/'")
+    }
+  )
+
+# save .csv file as well in case anyone not familiar with R would like to make own analysis e.g. in Excel
+write.csv2(df_complete, 'output/integrated_data.csv')
 
 
 ### ANALYSIS ###
-# Separate .r script in /utilities folder to make plots etc.
 # output plots / files whatever to /output directory
-# Stores that didn't provide us with data in Total Sales Summary
+source(list.files(pattern = "4_analysis*.R$", recursive = TRUE))
 
+# I think we should drop NAs from store_name and report them separately (KUBA) - flagged as "unkknown"
+df_analysis <- df_complete %>% filter(store_name != "unknown")
+
+p <- get_period_header(df_analysis)
+horizontal_bar_stores(df_analysis, period = p)
+
+# TODO Stores that didn't provide us with data in Total Sales Summary
 # e.g. store_id 345 doesn't exist in Stores data we need to flag those
 # dla Swiebodzina brak danych wszędzie
-
 # Kuba - przeniosłem tą część tutaj bo bardziej pasuje to do analizy
-which(is.na(df_stores_sales$store_number))
+which(is.na(df_stores_sales$store_number)) # tych NA będzie teraz więcej bo są tez te z Daffodils
 number <- df_stores_sales$store_number
 
 #for(i in 1:length(df_stores_sales$store_number)) {

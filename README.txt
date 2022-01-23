@@ -5,8 +5,9 @@ In the future if the management decides that it would like to see other data tha
 
 2. Requirements to run
 	* R in version 4.x with libraries installed:
-	  - tidyverse
+	  - tidyverse (version 1.3.1, some functions available from dplyr 1.0.0 up)
 	  - readxl
+	  - ggplot2
 
 3. Project structure
 This section provides overview of the structure and explains components
@@ -19,18 +20,19 @@ ParvifloraProject
     |     ├── (.xls, .csv .xlsx) input data files
     |     └── processed   
     ├── output
-    |     └── figs  
+    |     └── plots  
     └── utilities
           ├── 1_process_sales_summaries.R
 	  ├── 2_process_Daffodils.r
-	  ├── 3_ ...
+	  ├── 3_process_Stores.R
+	  └── 4_analysis.R
 
   * R_project_script.R - the main orchestrating script, the only 	one which executes any code. It imports functions from 		scripts in /utilities directory and uses them to process 	data. If one is interested to see the pipeline steps - 		it's here. Not all the code was 'hidden' tough. Some 		crucial steps like joining data from different sources 		was kept here as it helps to understand the logic.
 
   * data - directory where raw files with data should be placed, 		the program reads data from this location
 	 - /processed sub-directory - intended to store 			intermediate results of operation here in .Rds 			format for "checkpoint" access
   
-  * output - directory where all the output from program will be 	stored .xlsx or .html reports can go directly here. 		Figures should be saved to /figs sub-dir.
+  * output - directory where all the output from program will be 	stored .xlsx or .html reports can go directly here. 		Plots should be saved to /plots sub-dir.
   
   * utilities - scripts that define functions and constants used 	by those functions (e.g. column names for reading). 		Example: "process_Daffodils.r" will define functions 		that are used to process data from Daffodils sales 		system.
 
