@@ -108,13 +108,11 @@ horizontal_bar_stores(df_analysis, period = p)
 # TODO Stores that didn't provide us with data in Total Sales Summary
 # e.g. store_id 345 doesn't exist in Stores data we need to flag those
 # dla Swiebodzina brak danych wszędzie
-# Kuba - przeniosłem tą część tutaj bo bardziej pasuje to do analizy
-which(is.na(df_stores_sales$store_number)) # tych NA będzie teraz więcej bo są tez te z Daffodils
-number <- df_stores_sales$store_number
 
-#for(i in 1:length(df_stores_sales$store_number)) {
-#  if(is.na(data$x_num[i])) {
-#    print("Damn, it's NA")
-#  }
+df_analysis_no_number <- df_analysis[rowSums(is.na(df_analysis)) > 0, ]
+df_analysis_no_number %>%
+  select(store_name, store_number) %>%
+  distinct(store_name, store_number)
+# ^ teraz pokazuje sklepy bez numeru w czysty sposób
 
 
