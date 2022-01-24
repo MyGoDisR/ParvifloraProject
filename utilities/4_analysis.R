@@ -49,33 +49,40 @@ horizontal_bar_stores <- function(df, period) {
   save_plot("tot_rev_stores.png")
   return(plt)
 }
-    ' 
-    B U R D E L  K L O S K I
-    
-    N I E  D O T Y K A ?
-    '
-# gowno_plot <- function(df_analysis, period){
-#   'Create some plots... and save them in the end'
-#   # multiple tries to form some df for flowers, can't make it work :((
-#   # selected a specific column range, we might want to replace it with a function so that the chart works with new inputs
-#   df_col_flowers <- df_analysis %>% pivot_longer(6:13, names_to = "flower_types", values_to = "revenue/count")
-#   
-#   df_analysis %>% pivot_longer(df_analysis %>% select(contains("rev") | contains("count") %>% as.numeric())
-#                  , names_to = "Flower Types", values_to = "Flower Revenues")
-#   ggplot(df_analysis, aes(x = rev_total, y = count_total, color = )) +
-#     geom_bar() + xlab("Flower Type") + ylab("Total Revenue") + ggtitle("Total Revenue by Flower")
-#   
-#   save_plot("blabla.png")
-# }
-# 
-# gowno_plot_2 <- function(df_analysis, period){
-#   'Flower revenue share per store'
-#   
-#   ggplot((df_col_flowers %>% filter(str_detect(flower_types, "rev")) %>% group_by(rev_total)), aes(x = reorder(store_name, rev_total) , y = rev_total, color = flower_types)) + 
-#     geom_bar(stat="identity") + coord_flip() + 
-#     xlab("Store Name") + ylab("Total Revenue") + ggtitle(paste("Total Revenue of Parviflora stores"))
-# }
 
+bar_tot_flower_count <- function(df_analysis, period){
+  # selected a specific column range, we might want to replace it with a function so that the chart works with new inputs
+  # two tables for both count and revenue, could be easier by making one table with flowers in columns
+  df_col_flowers <- df_analysis %>% pivot_longer(6:13, names_to = "flower_types", values_to = "revenue/count")
+  df_col_flowers_rev <- df_col_flowers %>% filter(str_detect(flower_types, 'rev')) %>% rename(revenue = `revenue/count`)
+  df_col_flowers_cnt <- df_col_flowers %>% filter(str_detect(flower_types, 'count')) %>% rename(flower_count = `revenue/count`)
+
+  # temp
+  period <- get_period_header(df_analysis)
+  
+  plt3 <- ggplot(df_col_flowers_cnt, aes(x = flower_count, y = reorder(flower_types, flower_count))) +
+    geom_bar(stat='identity') + xlab("Count") + ylab("Flower Types") + ggtitle(paste("Total Count by Flower", period)) + 
+    scale_fill_brewer(palette = "Blues")
+
+  save_plot("bar_tot_flower_count.png")
+  return(plt3)
+}
+  
+gowno_plot_2 <- function(df_analysis, period){
+  'Scatterplot revenue to count by flower'
+  df_col_flowers <- df_analysis %>% pivot_longer(6:13, names_to = "flower_types", values_to = "revenue/count")
+  df_col_flowers2 <- df_col_flowers %>% separate(flower_types, c("revenue", "count"))
+  
+  # napisaæ F U N K C J E do total count per ka¿dy badyl
+  pq1 <- df_analysis %>% select(month, count_Azalea)
+  zapaseq <- aggregate(x = pq1$count_Azalea, by = list(pq1$month), FUN = sum)
+  colnames(zapaseq) <- c("month", "count")
+    
+  zapoz <- ggplot(zapaseq, aes(x = month, y = count)) +
+    geom_bar(stat="identity") + ggtitle(paste("Total Revenue of Parviflora stores"))
+
+  print(zapoz)
+}
 horizontal_bar_stores_counts <- function(df_analysis, get_period_header){
   'Amount of flowers sold in total over the three month period. Weirdly, high discrepancy in revenue and counts for Katowice or Rzesz?w'
   
@@ -84,10 +91,11 @@ horizontal_bar_stores_counts <- function(df_analysis, get_period_header){
     xlab("Store Name") + ylab("Total Count") + ggtitle(paste("Total Flower Counts of Parviflora stores", get_period_header))
   
   save_plot("tot_count_stores.png")
+  return(plt5)
 }
+
 #===============================================================================================================================
-#save_plot("blabla.png")
-#}
+
 
 diverging_bar_stores <- function(df) {
   '
@@ -147,6 +155,5 @@ bar_order_flower <- function(df) {
   save_plot("Mean_Order_per_Flower.png")
   return(plt2)
 }
-
 
 #>>>>>>> 6ce7f2fc57cc2ad6859053f450b4c470cfef9f05
