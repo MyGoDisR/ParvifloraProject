@@ -42,17 +42,17 @@ horizontal_bar_stores <- function(df, period) {
   '
   # create plot regarding total revenue
   # TODO make it more pretty (delete "Parviflora" maybe?) and add some space on the right side 
-  ggplot(df, aes(x = reorder(store_name, rev_total) , y = rev_total)) + 
+  plt <- ggplot(df, aes(x = reorder(store_name, rev_total) , y = rev_total)) + 
     geom_bar(stat="identity") + coord_flip() + 
     xlab("Store Name") + ylab("Total Revenue") + ggtitle(paste("Total Revenue of Parviflora stores", period))
   
   save_plot("tot_rev_stores.png")
-  
+  return(plt)
 }
     ' 
     B U R D E L  K L O S K I
     
-    N I E  D O T Y K A Æ
+    N I E  D O T Y K A ?
     '
 # gowno_plot <- function(df_analysis, period){
 #   'Create some plots... and save them in the end'
@@ -77,7 +77,7 @@ horizontal_bar_stores <- function(df, period) {
 # }
 
 horizontal_bar_stores_counts <- function(df_analysis, get_period_header){
-  'Amount of flowers sold in total over the three month period. Weirdly, high discrepancy in revenue and counts for Katowice or Rzeszów'
+  'Amount of flowers sold in total over the three month period. Weirdly, high discrepancy in revenue and counts for Katowice or Rzesz?w'
   
   ggplot(df_analysis, aes(x = reorder(store_name, count_total) , y = count_total)) + 
     geom_bar(stat="identity") + coord_flip() + 
@@ -85,9 +85,9 @@ horizontal_bar_stores_counts <- function(df_analysis, get_period_header){
   
   save_plot("tot_count_stores.png")
 }
-===============================================================================================================================
-  save_plot("blabla.png")
-}
+#===============================================================================================================================
+#save_plot("blabla.png")
+#}
 
 diverging_bar_stores <- function(df) {
   '
@@ -109,7 +109,7 @@ diverging_bar_stores <- function(df) {
   
   
   # Diverging Barcharts
-  ggplot(df_plot_prep, aes(x=store_name, y=revenue_norm, label=revenue_norm)) + 
+  plt1 <- ggplot(df_plot_prep, aes(x=store_name, y=revenue_norm, label=revenue_norm)) + 
     geom_bar(stat='identity', aes(fill=flag), width=.5)  +
     scale_fill_manual(name="Revenue", 
                       labels = c("Above Average", "Below Average"), 
@@ -120,8 +120,8 @@ diverging_bar_stores <- function(df) {
     coord_flip()
   
   save_plot("Normalized_Revenue_per_Store.png")
+  return(plt1)
 }
-
 
 bar_order_flower <- function(df) {
   '
@@ -133,7 +133,7 @@ bar_order_flower <- function(df) {
     <- png. file with the chart
   '
   
-  df_order <- df_analysis %>%
+  df_order <- df %>%
     dplyr::mutate(Azalea = rev_Azalea/count_Azalea,
                   Begonia = rev_Begonia/count_Begonia,
                   Carnation = rev_Carnation/count_Carnation,
@@ -142,11 +142,11 @@ bar_order_flower <- function(df) {
     dplyr::group_by(flower) %>%
     dplyr::summarize(mean_order_value = mean(order_value, na.rm = TRUE))
 
-  ggplot(df_order, aes(x = flower, y = mean_order_value)) + geom_bar(stat = "identity")
+   plt2 <- ggplot(df_order, aes(x = flower, y = mean_order_value)) + geom_bar(stat = "identity")
   
   save_plot("Mean_Order_per_Flower.png")
-  
+  return(plt2)
 }
 
 
->>>>>>> 6ce7f2fc57cc2ad6859053f450b4c470cfef9f05
+#>>>>>>> 6ce7f2fc57cc2ad6859053f450b4c470cfef9f05
