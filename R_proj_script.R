@@ -78,15 +78,17 @@ df_complete <- df_complete %>% mutate(rev_Daffodil = trans_amount,
                                mutate_if(is.numeric, ~replace(., is.na(.), 0)) %>% # first replace NAs (NA + 1 = NA)
                                mutate(rev_total = rev_total + rev_Daffodil)
                 
+# I think we should drop NAs from store_name and report them separately (KUBA) - flagged as "unkknown"
+df_analysis <- df_complete %>% filter(store_name != "unknown")
 
 # Save checkpoint file to /processed folder after data from both systems was integrated
 # this file may as well be used in .Rmd file
 tryCatch( # Just an experiment with tryCatch in R ... ugly syntax
     expr = {
-      saveRDS(df_complete, file = "data/processed/integrated_data.rds")
+      saveRDS(df_analysis, file = "data/processed/integrated_data.rds")
     }, # in case the above doesn't work - use recommended "here" library
     error = function(e){
-      saveRDS(df_complete, here::here("data", "processed", "integrated_data.rds"))
+      saveRDS(df_analysis, here::here("data", "processed", "integrated_data.rds"))
       message("File saved using here package, couldn't resolve path with '/'")
     }
   )
@@ -98,9 +100,6 @@ write.csv2(df_complete, 'output/integrated_data.csv')
 ### ANALYSIS ###
 # output plots / files whatever to /output directory
 source(list.files(pattern = "4_analysis*.R$", recursive = TRUE))
-
-# I think we should drop NAs from store_name and report them separately (KUBA) - flagged as "unkknown"
-df_analysis <- df_complete %>% filter(store_name != "unknown")
 
 p <- get_period_header(df_analysis)
 horizontal_bar_stores(df_analysis, period = p)
